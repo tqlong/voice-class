@@ -11,12 +11,12 @@ def get_mfcc(file_path):
     win_length = math.floor(sr*0.025)
     mfcc = librosa.feature.mfcc(
         y, sr, n_mfcc=12, hop_length=hop_length, n_fft=1024, win_length=win_length)
-    mfcc = mfcc - np.mean(mfcc, axis=1).reshape((-1,1))
+    mfcc = mfcc - np.mean(mfcc, axis=1).reshape((-1,1)) # substract mean from mfcc
     delta1 = librosa.feature.delta(mfcc, order=1)
     delta2 = librosa.feature.delta(mfcc, order=2)
-    X = np.concatenate([mfcc, delta1, delta2], axis=0)
+    X = np.concatenate([mfcc, delta1, delta2], axis=0) # O^r
 
-    return X.T
+    return X.T # hmmlearn use T x N matrix
 
 def get_class_data(data_dir):
     files = os.listdir(data_dir)
@@ -33,11 +33,13 @@ if __name__ == "__main__":
     class_names = ["one", "two"]
     dataset = {}
     for cname in class_names:
+        print(f"Load {cname} dataset")
         dataset[cname] = get_class_data(os.path.join("data", cname))
 
     all_vectors = np.concatenate([np.concatenate(v, axis=0) for k, v in dataset.items()], axis=0)
     print("vectors", all_vectors.shape)
     kmeans = clustering(all_vectors)
+    print("centers", kmeans.cluster_centers_.shape)
 
     models = {}
     for cname in class_names:
@@ -57,14 +59,15 @@ if __name__ == "__main__":
         )
         X = np.concatenate(dataset[cname])
         lengths = list([len(x) for x in dataset[cname]])
-        print("class", cname)
+        print("training class", cname)
         print(X.shape, lengths, len(lengths))
         hmm.fit(X, lengths=lengths)
         models[cname] = hmm
+    print("Training done")
 
+    print("Testing")
     for true_cname in class_names:
         for O in dataset[true_cname]:
             score = {cname : model.score(O, [len(O)]) for cname, model in models.items() }
             print(true_cname, score)
 
-    print("Training done")
