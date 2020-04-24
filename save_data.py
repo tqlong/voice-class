@@ -117,7 +117,7 @@ try:
         with stream:
             plt.show()
 
-        class_name = "apple"
+        class_name = "test_two"
         data_dir = os.path.join("data",class_name)
         os.makedirs(data_dir, exist_ok=True)
         file_path = os.path.join(data_dir, f"{class_name}_{count:03d}.wav")
